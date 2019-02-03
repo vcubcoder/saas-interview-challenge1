@@ -3,7 +3,7 @@ package redisprovider
 import (
 	"encoding/json"
 	"errors"
-	"time"
+	"saas-interview-challenge1/job"
 
 	"github.com/go-redis/redis"
 )
@@ -12,14 +12,7 @@ import (
 type Client interface {
 	// Get(string) (error, interface{})
 	PutJobExecutionDetails(string, interface{}) error
-	GetJobExecutionDetails(string) (*JobExecutionDetails, error)
-}
-
-// JobExecutionDetails ...
-type JobExecutionDetails struct {
-	ID          string
-	Status      string
-	Detailsteps interface{}
+	GetJobExecutionDetails(string) (*job.JobExecutionDetails, error)
 }
 
 // RedisClient - warpper for redis client interface
@@ -28,8 +21,8 @@ type redisClient struct {
 }
 
 // GetJobExecutionDetails gets the detailed job status from data store
-func (rc *redisClient) GetJobExecutionDetails(jobid string) (*JobExecutionDetails, error) {
-	var jd JobExecutionDetails
+func (rc *redisClient) GetJobExecutionDetails(jobid string) (*job.JobExecutionDetails, error) {
+	var jd job.JobExecutionDetails
 	val, err := rc.client.Get(jobid).Bytes()
 
 	if err == redis.Nil {
@@ -55,14 +48,11 @@ func (rc *redisClient) PutJobExecutionDetails(key string, value interface{}) err
 }
 
 // NewRedisClient ...
-func NewRedisClient() Client {
+func NewRedisClient(addr string) Client {
 	internalredis := redis.NewClient(&redis.Options{
-		Addr:         ":6379",
-		DialTimeout:  10 * time.Second,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-		PoolSize:     10,
-		PoolTimeout:  30 * time.Second,
+		Addr:     addr + ":6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
 	})
 	return &redisClient{
 		client: internalredis,
