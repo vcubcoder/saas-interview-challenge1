@@ -1,13 +1,12 @@
-FROM golang:1.11.4-alpine
 
-ADD . /saas-interview-challenge1
-ENV GO111MODULE=on
-ENV CGO_ENABLED=0
-ENV REDIS_HOST=""
-        
+FROM golang:1.11.4-alpine as build
 WORKDIR /saas-interview-challenge1
-
+ADD . /saas-interview-challenge1
 RUN apk add git 
+RUN CGO_ENABLED=0 GOOS=linux go build -a -o saasinterviewapp cmd/main.go
 
-ENTRYPOINT [ "go","run", "cmd/main.go","--redis-host", "${REDIS_HOST}]
-# CMD ["go", "run","cmd/main.go", "--redis-host", "${REDIS_HOST}"]
+FROM alpine:latest  
+WORKDIR /saas-interview-challenge1
+COPY --from=build /saas-interview-challenge1/saasinterviewapp .
+ENTRYPOINT ./saasinterviewapp --redis-host="${REDIS_HOST}"
+         
