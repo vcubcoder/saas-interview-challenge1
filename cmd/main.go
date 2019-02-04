@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
 	"sync"
 
 	"saas-interview-challenge1/job"
@@ -11,21 +13,35 @@ import (
 
 func main() {
 
-	// This program assumes fixed number of workers and fixed number of jobs, thus job jobs channels are closed
+	// This program assumes fixed number of workers and fixed number of jobs,
+	// jobs channel is closed after assigning the jobs
 
-	noworkers := 5
+	redisip := flag.String("redis-host", "", "10.11.192.1 (mandatory param)")
+	workers := flag.Int("workers", 4, "number of workers, defaulted to 4")
+
+	flag.Parse()
+
+	if *redisip == "" {
+		fmt.Println("Redis Host is not provided")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	noworkers := *workers
 	nojobs := 10
+
+	fmt.Println("No of Workers :", noworkers)
+	fmt.Println("Redis Host", *redisip)
 
 	jobch := make(chan job.Job, 10)
 	resultch := make(chan job.Status, 10)
-	rclient := redis.NewRedisClient("localhost")
-
+	rclient := redis.NewRedisClient(*redisip)
 	worker := worker.NewWorker(jobch, resultch, rclient)
 
 	//Assign jobs
 	go job.AssignJobs(jobch, nojobs)
 
-	// create worker pool(workers are not open ended) and run them
+	// create worker pool and run them
 	var wg sync.WaitGroup
 	wg.Add(noworkers)
 	for i := 0; i < noworkers; i++ {
@@ -39,12 +55,16 @@ func main() {
 	//After all the workers are done collect the job results
 	for i := 0; i < nojobs; i++ {
 		res := <-resultch
-		jd, _ := rclient.GetJobExecutionDetails(res.ID)
-		if jd.Status != "Pass" {
-			//get the data from redis and print the error
-			fmt.Printf("JobID: %s, Statu: %s, Job steps staus : %v\n", jd.ID, jd.Status, jd.Detailsteps)
+		jd, err := rclient.GetJobExecutionDetails(res.ID)
+		if err != nil {
+			fmt.Printf("Pull job execution details failed. job id: %s, error : %s", res.ID, err)
 		} else {
-			fmt.Printf("JobID : %s, Status : %s\n", jd.ID, jd.Status)
+			if jd.Status != "Pass" {
+				//get the data from redis and print the error
+				fmt.Printf("JobID: %s, Statu: %s, Job steps staus : %v\n", jd.ID, jd.Status, jd.Detailsteps)
+			} else {
+				fmt.Printf("JobID : %s, Status : %s\n", jd.ID, jd.Status)
+			}
 		}
 	}
 }

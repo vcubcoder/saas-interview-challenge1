@@ -3,6 +3,7 @@ package redisprovider
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"saas-interview-challenge1/job"
 
 	"github.com/go-redis/redis"
@@ -10,7 +11,6 @@ import (
 
 // Client ...
 type Client interface {
-	// Get(string) (error, interface{})
 	PutJobExecutionDetails(string, interface{}) error
 	GetJobExecutionDetails(string) (*job.JobExecutionDetails, error)
 }
@@ -31,13 +31,14 @@ func (rc *redisClient) GetJobExecutionDetails(jobid string) (*job.JobExecutionDe
 		return nil, err
 	}
 	err = json.Unmarshal(val, &jd)
+	if err != nil {
+		fmt.Println("Redis data Unmarshalling failed")
+		return nil, err
+	}
 	return &jd, nil
 }
 
-// func (rc *redisClient) Get() (interface{}, error) {
-// 	return nil, nil
-// }
-
+// PutJobExecutionDetails write the job execution details on to data store
 func (rc *redisClient) PutJobExecutionDetails(key string, value interface{}) error {
 	val, _ := json.Marshal(value)
 	err := rc.client.Set(key, val, 0).Err()
