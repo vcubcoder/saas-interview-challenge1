@@ -20,18 +20,18 @@ This challenge is not meant to be a production ready version, but it is meant to
 Some requirements / concepts we would like to see (either in code or at least outlined in the README):
 
 - Build instructions (any 3rd party requirements and how to generally get them setup on either linux or mac) -- docker-compose or something similar is suggested
-- Usage instructions (i.e. samples to actually show how it works)
-  docker-compose up
+- Usage instructions (i.e. samples to actually show how it works)  
+  docker-compose up  
 - Unit tests
 - Integration tests
-- Are there any shortcomings of the code?
+- Are there any shortcomings of the code?  
   The code assumes fixed number of jobs so the approach taken is bounded workers pattern (i.e.) workers come to an end when all the jobs in the queue is processed. If the unbounded worker pattern is required then worker will be listening on the queue until the user terminates the program
-- How might this project be scaled?
+- How might this project be scaled?  
   Added more more workers increase the parallelsim. 
-- How might one approach doing sequential versus parallel tasks?
-  In order to maintain the order or sequence of jobs couple of approaches be used
-   1. Single worker pattern where worker pick and completes the job before pick the next job
-   2. Worker listens on the kafka topic. Kafka retains the order/sequence comes into the topic
+- How might one approach doing sequential versus parallel tasks?  
+  In order to maintain the order or sequence of jobs couple of approaches be used  
+   1. Single worker pattern where worker pick and completes the job before pick the next job  
+   2. Worker listens on the kafka topic. Kafka retains the order/sequence comes into the topic  
 
 ## Completion Format
 
